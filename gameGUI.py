@@ -131,7 +131,6 @@ while 1:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             click = event.pos[0]
-            print(turn)
             if turn % 2 == 0:
                 current_turn = turn_input(click, board, P1PIECE)
                 while not current_turn:
