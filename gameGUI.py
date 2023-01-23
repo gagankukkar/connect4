@@ -1,6 +1,9 @@
 import sys
 import pygame
+from pygame import mixer
+
 pygame.init()
+mixer.init()
 
 #  Spacing and sizing of board
 ROW_TOT = 6
@@ -35,9 +38,20 @@ turn = 0
 pygame.font.init()
 font = pygame.font.SysFont(None, 140)
 
+#  Initialize music and sounds
+mixer.music.load('bg-music.ogg')
+mixer.music.play(-1)
+coin_sound = mixer.Sound('coin-sound.ogg')
+tada_sound = mixer.Sound('tada.ogg')
+
+def clear_text():
+    pygame.draw.rect(screen, BLACK, (0, 0, width, PITCH))
+
 #  Draw board background
-screen.fill(GREEN)
-pygame.draw.rect(screen, BLACK, (0, 0, width, PITCH))
+background = pygame.image.load('green-16.jpg')
+background = pygame.transform.scale(background, (700, 700))
+screen.blit(background, (0, 0))
+clear_text()
 
 for col in range(COL_TOT + 1):
     # Solve beginning edge case
@@ -67,14 +81,13 @@ def board_draw():
 
 
 def turn_input(click, board, piece):
-    while True:
-        col = int(click/PITCH)
-        for row in range(ROW_TOT):
-            if board[row][col] == 0:
-                board[row][col] = piece
-                return True
-            elif row == 5:
-                return False
+    col = int(click/PITCH)
+    for row in range(ROW_TOT):
+        if board[row][col] == 0:
+            board[row][col] = piece
+            return True
+        elif row == 5:
+            return False
 
 
 def check_win(board, piece):
@@ -109,11 +122,12 @@ def end_printer(colour, piece):
         winner = font.render('Player ' + str(piece) + ' wins!', True, colour)
         screen.blit(winner, (14, 0))
 
+    tada_sound.play()
     pygame.display.update()
-    pygame.time.wait(4000)
+    pygame.time.wait(3000)
     sys.exit()
 
-
+#  Game loop
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -123,8 +137,13 @@ while 1:
             welcome = font.render('Welcome!', True, GREEN)
             screen.blit(welcome, (119, 0))
 
-        elif turn == 1:
-            pygame.draw.rect(screen, BLACK, (0, 0, width, PITCH))
+        elif turn % 2 == 0:
+            turn_text = font.render('Player 1 Turn!', True, BLUE)
+            screen.blit(turn_text, (26, 0))
+        
+        else:
+            turn_text = font.render('Player 2 Turn!', True, RED)
+            screen.blit(turn_text, (26, 0))
 
         board_draw()
         pygame.display.update()
@@ -133,14 +152,16 @@ while 1:
             click = event.pos[0]
             if turn % 2 == 0:
                 current_turn = turn_input(click, board, P1PIECE)
-                while not current_turn:
-                    current_turn = turn_input(click, board, P1PIECE)
+                if not current_turn:
+                    continue
             else:
                 current_turn = turn_input(click, board, P2PIECE)
-                while not current_turn:
-                    current_turn = turn_input(click, board, P2PIECE)
+                if not current_turn:
+                    continue
 
+            coin_sound.play()
             turn += 1
+            clear_text()
             board_draw()
             pygame.display.update()
 
